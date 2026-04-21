@@ -26,7 +26,9 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git pull --rebase origin main
           git add dashboard_sprint_lineru.html
+          git stash
+          git pull --rebase origin main
+          git stash pop
           git diff --staged --quiet || git commit -m "🔄 Auto-update dashboard $(date +'%d/%m/%Y %H:%M')"
           git push
