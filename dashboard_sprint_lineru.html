@@ -75,7 +75,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="hdr-title">Sprint Dashboard &middot; Lineru</div>
     <div class="hdr-sub">Sprint activo &middot; Task / Bug / Subtask / Test Set &middot; SER + REQ</div>
   </div>
-  <div class="updated">&#x1F504; Actualizado: 21/04/2026 19:53</div>
+  <div class="updated">&#x1F504; Actualizado: 21/04/2026 19:58</div>
 </div>
 
 <div class="pills" id="pills"></div>
@@ -110,19 +110,41 @@ function card(p,i){
   var hR=Object.keys(req).length>0;var hS=Object.keys(ser).length>0;var hD=Object.keys(dev).length>0;
   var pct=Math.min(p.stats.est_h/160*100,100);
   var bc=p.stats.blocked>3?"#e24b4a":p.stats.est_h>120?"#ba7517":"#1d9e75";
-  return "<div class=\"pcard\" onclick=\"sel("+i+")\">"
-    +"<div style=\"display:flex;align-items:center;gap:8px;margin-bottom:8px;\">"
-    +"<div class=\"av\" style=\""+avc(p.name)+"\">"+ini(p.name)+"</div>"
-    +"<div><div class=\"pname\">"+p.name+"</div><div class=\"pteam\">"+p.team+"</div></div></div>"
-    +"<div style=\"display:flex;justify-content:space-between;font-size:9.5px;color:#999;margin-bottom:4px;\">"
-    +"<span>"+p.stats.total+" issues &middot; "+p.stats.est_h.toFixed(1)+"h</span>"
-    +"<span>"+pct.toFixed(0)+"% cap</span></div>"
-    +"<div style=\"height:5px;background:#f0f0ec;border-radius:3px;overflow:hidden;display:flex;margin-bottom:2px;\">"+"<div style=\"width:"+(Math.min(p.stats.log_h/160*100,100)).toFixed(1)+"%;background:"+(p.stats.log_h>p.stats.est_h&&p.stats.est_h>0?"#e24b4a":"#1d9e75")+";\"></div>"+"<div style=\"width:"+(Math.min(Math.max(0,p.stats.est_h-p.stats.log_h)/160*100,100)).toFixed(1)+"%;background:#f0a500;opacity:.7;\\"></div>"+"</div>"+"<div style=\"display:flex;justify-content:space-between;font-size:8.5px;color:#aaa;margin-bottom:5px;\">"+"<span style=\"color:#1d9e75;\">&#9632; "+p.stats.log_h.toFixed(1)+"h log</span>"+"<span style=\"color:#f0a500;\">&#9632; "+Math.max(0,p.stats.est_h-p.stats.log_h).toFixed(1)+"h rest</span>"+"<span>/ 160h</span>"+"</div>"
-    +(hR?"<div class=\"board-row\"><span class=\"board-label lreq\">REQ</span><div class=\"chips\">"+chips(req,rc)+"</div></div>":"")
-    +(hS?"<div class=\"board-row\"><span class=\"board-label lser\">SER</span><div class=\"chips\">"+chips(ser,sc)+"</div></div>":"")
-    +(hD?"<div class=\\"board-row\\"><span class=\\"board-label ldev\\">DEV</span><div class=\\"chips\\">"+chips(dev,devCls)+"</div></div>":"")
-    +(p.stats.capex_pct+p.stats.opex_pct>0?"<div style=\\"height:3px;display:flex;margin-top:4px;\\">"+"<div style=\\"flex:"+p.stats.capex_pct+";background:#378add;\\"></div>"+"<div style=\\"flex:"+p.stats.opex_pct+";background:#f0a500;\\"></div>"+"</div>"+"<div style=\\"font-size:9px;margin-top:2px;\\">"+"<span style=\\"color:#378add;font-weight:600;\\">&#9632;CAPEX "+p.stats.capex_pct+"%</span> "+"<span style=\\"color:#f0a500;font-weight:600;\\">&#9632;OPEX "+p.stats.opex_pct+"%</span>"+"</div>":"")
-    +"</div>";
+  var lh=p.stats.log_h,rh=Math.max(0,p.stats.est_h-lh);
+  var lp=Math.min(lh/160*100,100).toFixed(1);
+  var rp=Math.min(rh/160*100,100).toFixed(1);
+  var over=lh>p.stats.est_h&&p.stats.est_h>0;
+  var logColor=over?"#e24b4a":"#1d9e75";
+  var capex=p.stats.capex_pct,opex=p.stats.opex_pct;
+  var html="<div class="pcard" onclick="sel("+i+")">";
+  html+="<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">";
+  html+="<div class="av" style=""+avc(p.name)+"">"+ini(p.name)+"</div>";
+  html+="<div><div class="pname">"+p.name+"</div><div class="pteam">"+p.team+"</div></div></div>";
+  html+="<div style="display:flex;justify-content:space-between;font-size:9.5px;color:#999;margin-bottom:4px;">";
+  html+="<span>"+p.stats.total+" issues &middot; "+p.stats.est_h.toFixed(1)+"h</span>";
+  html+="<span>"+pct.toFixed(0)+"% cap</span></div>";
+  html+="<div style="height:5px;background:#f0f0ec;border-radius:3px;overflow:hidden;display:flex;margin-bottom:2px;">";
+  html+="<div style="width:"+lp+"%;background:"+logColor+";"></div>";
+  html+="<div style="width:"+rp+"%;background:#f0a500;opacity:.7;"></div>";
+  html+="</div>";
+  html+="<div style="display:flex;justify-content:space-between;font-size:8.5px;color:#aaa;margin-bottom:4px;">";
+  html+="<span style="color:"+logColor+"">&#9632; "+lh.toFixed(1)+"h log</span>";
+  html+="<span style="color:#f0a500;">&#9632; "+rh.toFixed(1)+"h rest</span>";
+  html+="<span>/ 160h</span></div>";
+  if(capex+opex>0){
+    html+="<div style="height:3px;display:flex;border-radius:2px;overflow:hidden;margin-bottom:2px;">";
+    html+="<div style="flex:"+capex+";background:#378add;"></div>";
+    html+="<div style="flex:"+opex+";background:#f0a500;"></div></div>";
+    html+="<div style="font-size:8.5px;color:#aaa;margin-bottom:4px;">";
+    html+="<span style="color:#378add;font-weight:600;">&#9632;CAP "+capex+"%</span> ";
+    html+="<span style="color:#f0a500;font-weight:600;">&#9632;OPE "+opex+"%</span></div>";
+  }
+  html+="<div class="divider"></div>";
+  if(hR) html+="<div class="board-row"><span class="board-label lreq">REQ</span><div class="chips">"+chips(req,rc)+"</div></div>";
+  if(hS) html+="<div class="board-row"><span class="board-label lser">SER</span><div class="chips">"+chips(ser,sc)+"</div></div>";
+  if(hD) html+="<div class="board-row"><span class="board-label ldev">DEV</span><div class="chips">"+chips(dev,devCls)+"</div></div>";
+  html+="</div>";
+  return html;
 }
 function sel(i){
   document.querySelectorAll(".pcard").forEach(function(c,j){c.classList.toggle("sel",j===i);});
