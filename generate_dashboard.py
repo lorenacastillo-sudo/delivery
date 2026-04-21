@@ -397,11 +397,11 @@ function card(p,i){{
     +"<div style=\\"display:flex;justify-content:space-between;font-size:9.5px;color:#999;margin-bottom:4px;\\">"
     +"<span>"+p.stats.total+" issues &middot; "+p.stats.est_h.toFixed(1)+"h</span>"
     +"<span>"+pct.toFixed(0)+"% cap</span></div>"
-    +"<div style=\\"height:4px;background:#f0f0ec;border-radius:2px;overflow:hidden;margin-bottom:8px;\\">"
-    +"<div style=\\"height:100%;width:"+pct.toFixed(0)+"%;background:"+bc+";border-radius:2px;\\"></div></div>"
-    +"<div class=\\"divider\\"></div>"
+    +(function(){var lh=p.stats.log_h,rh=Math.max(0,p.stats.est_h-lh),lp=Math.min(lh/160*100,100).toFixed(1),rp=Math.min(rh/160*100,100).toFixed(1),over=lh>p.stats.est_h&&p.stats.est_h>0;return "<div style=\\\\"height:5px;background:#f0f0ec;border-radius:3px;overflow:hidden;display:flex;margin-bottom:2px;\\\\">"+"<div style=\\\\"width:"+lp+"%;background:"+(over?"#e24b4a":"#1d9e75")+";\\\\"></div>"+"<div style=\\\\"width:"+rp+"%;background:#f0a500;opacity:.7;\\\\"></div>"+"</div>"+"<div style=\\\\"display:flex;justify-content:space-between;font-size:8.5px;color:#aaa;margin-bottom:5px;\\\\">"+"<span style=\\\\"color:#1d9e75;\\\\">&#9632; "+lh.toFixed(1)+"h log</span>"+"<span style=\\\\"color:#f0a500;\\\\">&#9632; "+rh.toFixed(1)+"h rest</span>"+"<span>/ 160h</span>"+"</div>";})()\n    +"<div class=\\"divider\\"></div>"
     +(hR?"<div class=\\"board-row\\"><span class=\\"board-label lreq\\">REQ</span><div class=\\"chips\\">"+chips(req,rc)+"</div></div>":"")
     +(hS?"<div class=\\"board-row\\"><span class=\\"board-label lser\\">SER</span><div class=\\"chips\\">"+chips(ser,sc)+"</div></div>":"")
+    +(hD?"<div class=\\\\"board-row\\\\"><span class=\\\\"board-label ldev\\\\">DEV</span><div class=\\\\"chips\\\\">"+chips(dev,devCls)+"</div></div>":"")
+    +(p.stats.capex_pct+p.stats.opex_pct>0?"<div style=\\\\"height:3px;display:flex;margin-top:4px;\\\\">"+"<div style=\\\\"flex:"+p.stats.capex_pct+";background:#378add;\\\\"></div>"+"<div style=\\\\"flex:"+p.stats.opex_pct+";background:#f0a500;\\\\"></div>"+"</div>"+"<div style=\\\\"font-size:9px;margin-top:2px;\\\\">"+"<span style=\\\\"color:#378add;font-weight:600;\\\\">&#9632;CAPEX "+p.stats.capex_pct+"%</span> "+"<span style=\\\\"color:#f0a500;font-weight:600;\\\\">&#9632;OPEX "+p.stats.opex_pct+"%</span>"+"</div>":"")
     +"</div>";
 }}
 function sel(i){{
