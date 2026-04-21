@@ -61,6 +61,12 @@ TEAM_MAP = {
     'Javier Gutierrez': 'Legacy/Integrations',
 }
 
+# People to exclude from dashboard
+EXCLUDE = {'Valentina Juya', 'Area Financiera', 'Sin asignar'}
+
+# Infraestructura members who also get DEV tickets
+INFRA_MEMBERS = {'Omar Davila', 'David Tabla', 'Valentina Aguirre'}
+
 
 def fetch_all(jql, fields):
     all_issues = []
@@ -87,11 +93,38 @@ def fetch_all(jql, fields):
         }
     return all_issues
 
+def get_last_comment(issue_key):
+    """Fetch last comment for a blocked issue"""
+    try:
+        url = f"{JIRA_BASE}/rest/api/3/issue/{issue_key}/comment"
+        params = {"maxResults": 1, "orderBy": "-created"}
+        r = requests.get(url, headers=HEADERS, params=params)
+        r.raise_for_status()
+        data = r.json()
+        comments = data.get("comments", [])
+        if not comments:
+            return ""
+        body = comments[-1].get("body", {})
+        # Extract plain text from ADF format
+        text = ""
+        if isinstance(body, dict):
+            for block in body.get("content", []):
+                for inline in block.get("content", []):
+                    if inline.get("type") == "text":
+                        text += inline.get("text", "")
+                    elif inline.get("type") == "mention":
+                        text += "@" + inline.get("attrs", {}).get("text", "").replace("@","")
+        elif isinstance(body, str):
+            text = body
+        return text[:200].strip()
+    except:
+        return ""
+
 print("Fetching REQ issues (openSprints)...")
 req_open = fetch_all(
     'sprint in openSprints() AND issuetype in ("Task","Bug","Subtask","Test Set")',
     ["summary","assignee","status","issuetype","project","timeoriginalestimate",
-     "timespent","timeestimate","priority","customfield_10001"]
+     "timespent","timeestimate","priority","customfield_10001","statuscategorychangedate","created","customfield_10937"]
 )
 print(f"REQ openSprints: {len(req_open)} issues")
 
@@ -99,7 +132,7 @@ print("Fetching REQ issues (sprint 2016)...")
 req_2016 = fetch_all(
     'sprint = 2016 AND issuetype in ("Task","Bug","Subtask","Test Set")',
     ["summary","assignee","status","issuetype","project","timeoriginalestimate",
-     "timespent","timeestimate","priority","customfield_10001"]
+     "timespent","timeestimate","priority","customfield_10001","statuscategorychangedate","created","customfield_10937"]
 )
 print(f"REQ sprint 2016: {len(req_2016)} issues")
 
@@ -116,15 +149,25 @@ print("Fetching SER issues...")
 ser_issues = fetch_all(
     'project = SER AND status in ("En curso", "Escalated", "Pending", "Waiting for customer", "Waiting for support", "Waiting for approval")',
     ["summary","assignee","status","issuetype","project","timeoriginalestimate",
-     "timespent","timeestimate","priority","customfield_10001"]
+     "timespent","timeestimate","priority","customfield_10001","statuscategorychangedate","created","customfield_10937"]
 )
 print(f"SER: {len(ser_issues)} issues")
+
+print("Fetching DEV issues for Infraestructura...")
+dev_issues = fetch_all(
+    'project = DEV AND status in ("En curso", "Escalated", "Pending", "Waiting for customer", "Waiting for support", "Waiting for approval", "Waiting for approval")',
+    ["summary","assignee","status","issuetype","project","timeoriginalestimate",
+     "timespent","timeestimate","priority","customfield_10001","statuscategorychangedate","created","customfield_10937"]
+)
+print(f"DEV: {len(dev_issues)} issues")
 
 people = defaultdict(lambda: {'team':'Sin equipo','issues':[]})
 
 for i in req_issues:
     f = i['fields']
     name = f['assignee']['displayName'] if f.get('assignee') else 'Sin asignar'
+    if name in EXCLUDE:
+        continue
     team = TEAM_MAP.get(name, (f.get('customfield_10001') or {}).get('name','Sin equipo'))
     status = f['status']['name']
     proj = f['project']['key']
@@ -134,22 +177,36 @@ for i in req_issues:
     prio = (f.get('priority') or {}).get('name','Medium')
     summary = (f.get('summary') or '')[:70]
     itype = f['issuetype']['name']
+    # Days in current status
+    status_change = f.get('statuscategorychangedate','')[:10] if f.get('statuscategorychangedate') else ''
+    days_in_status = 0
+    if status_change:
+        try:
+            from datetime import datetime
+            d = datetime.strptime(status_change, '%Y-%m-%d')
+            days_in_status = (datetime.now() - d).days
+        except:
+            pass
     p = people[name]
     if p['team'] == 'Sin equipo' and team != 'Sin equipo':
         p['team'] = team
+    inversion = (f.get('customfield_10937') or {}).get('value', '')
     p['issues'].append({
         'key': i['key'], 'summary': summary, 'status': status,
         'type': itype, 'proj': proj, 'est': est, 'log': log,
-        'rem': rem, 'prio': prio, 'board': 'REQ'
+        'rem': rem, 'prio': prio, 'board': 'REQ', 'days_in_status': days_in_status,
+        'last_comment': '', 'inversion': inversion
     })
 
 for i in ser_issues:
     f = i['fields']
     name = f['assignee']['displayName'] if f.get('assignee') else 'Sin asignar'
+    if name in EXCLUDE:
+        continue
     raw_st = f['status']['name']
     status = SER_STATUS_MAP.get(raw_st, raw_st)
     if status not in SER_OPEN:
-        continue  # skip closed SER tickets
+        continue
     team = TEAM_MAP.get(name, (f.get('customfield_10001') or {}).get('name','Sin equipo'))
     proj = f['project']['key']
     est = f.get('timeoriginalestimate') or 0
@@ -164,16 +221,44 @@ for i in ser_issues:
     p['issues'].append({
         'key': i['key'], 'summary': summary, 'status': status,
         'type': itype, 'proj': proj, 'est': est, 'log': log,
-        'rem': rem, 'prio': prio, 'board': 'SER'
+        'rem': rem, 'prio': prio, 'board': 'SER',
+        'days_in_status': (lambda sc: ((__import__('datetime').datetime.now() - __import__('datetime').datetime.strptime(sc[:10], '%Y-%m-%d')).days) if sc else 0)(f.get('statuscategorychangedate','')),
+        'last_comment': '', 'inversion': (f.get('customfield_10937') or {}).get('value', '')
     })
 
 ACTIVE = {'[IN PROGRESS]','En curso','Pending'}
 BLOCKED = {'[BLOCKED]','Escalated'}
 DONE = {'[FINISHED]','Resolved','[CANCELED]','[SOLVED]'}
 
+# Fetch last comment for all blocked REQ issues
+print("Fetching comments for blocked issues...")
+blocked_keys = [
+    i['key'] for data in people.values()
+    for i in data['issues']
+    if i['status'] in {'[BLOCKED]', 'Escalated'} and i['board'] in {'REQ', 'DEV'}
+]
+print(f"Blocked issues: {len(blocked_keys)}")
+comments_map = {}
+for key in blocked_keys:
+    comments_map[key] = get_last_comment(key)
+
+# Attach comments to issues
+for data in people.values():
+    for i in data['issues']:
+        if i['key'] in comments_map:
+            i['last_comment'] = comments_map[i['key']]
+        else:
+            i['last_comment'] = ""
+
 output = []
 for name, data in sorted(people.items()):
     issues = data['issues']
+    req_issues_only = [i for i in issues if i['board'] == 'REQ']
+    capex_h = round(sum(i['est'] for i in req_issues_only if i.get('inversion') == 'CAPEX')/3600, 1)
+    opex_h = round(sum(i['est'] for i in req_issues_only if i.get('inversion') == 'OPEX')/3600, 1)
+    total_inv_h = capex_h + opex_h
+    capex_pct = round(capex_h/total_inv_h*100) if total_inv_h > 0 else 0
+    opex_pct = round(opex_h/total_inv_h*100) if total_inv_h > 0 else 0
     stats = {
         'total': len(issues),
         'est_h': round(sum(i['est'] for i in issues)/3600, 1),
@@ -185,6 +270,8 @@ for name, data in sorted(people.items()):
         'ret': sum(1 for i in issues if i['status'] == '[RETURNED]'),
         'ser': sum(1 for i in issues if i['board'] == 'SER'),
         'req': sum(1 for i in issues if i['board'] == 'REQ'),
+        'capex_h': capex_h, 'opex_h': opex_h,
+        'capex_pct': capex_pct, 'opex_pct': opex_pct,
     }
     output.append({'name': name, 'team': data['team'], 'issues': issues, 'stats': stats})
 
@@ -299,8 +386,8 @@ function render(){{
 function filt(){{return curTeam==="Todos"?ALL:ALL.filter(function(p){{return p.team===curTeam;}});}}
 function setTeam(t){{curTeam=t;document.getElementById("detail").innerHTML="";render();}}
 function card(p,i){{
-  var req=ab(p.issues,"REQ");var ser=ab(p.issues,"SER");
-  var hR=Object.keys(req).length>0;var hS=Object.keys(ser).length>0;
+  var req=ab(p.issues,"REQ");var ser=ab(p.issues,"SER");var dev=ab(p.issues,"DEV");
+  var hR=Object.keys(req).length>0;var hS=Object.keys(ser).length>0;var hD=Object.keys(dev).length>0;
   var pct=Math.min(p.stats.est_h/160*100,100);
   var bc=p.stats.blocked>3?"#e24b4a":p.stats.est_h>120?"#ba7517":"#1d9e75";
   return "<div class=\\"pcard\\" onclick=\\"sel("+i+")\\">"
@@ -370,6 +457,35 @@ render();
 
 with open("dashboard_sprint_lineru.html", "w", encoding="utf-8") as f:
     f.write(html)
+
+# Process DEV issues (only for Infraestructura members)
+for i in dev_issues:
+    f = i['fields']
+    name = f['assignee']['displayName'] if f.get('assignee') else 'Sin asignar'
+    if name not in INFRA_MEMBERS:
+        continue
+    raw_st = f['status']['name']
+    status = SER_STATUS_MAP.get(raw_st, raw_st)
+    if status not in SER_OPEN:
+        continue
+    team = 'Infraestructura'
+    proj = f['project']['key']
+    est = f.get('timeoriginalestimate') or 0
+    log = f.get('timespent') or 0
+    rem = f.get('timeestimate') or 0
+    prio = (f.get('priority') or {}).get('name','Medium')
+    summary = (f.get('summary') or '')[:70]
+    itype = f['issuetype']['name']
+    days_in_status = (lambda sc: ((__import__('datetime').datetime.now() - __import__('datetime').datetime.strptime(sc[:10], '%Y-%m-%d')).days) if sc else 0)(f.get('statuscategorychangedate',''))
+    p = people[name]
+    if p['team'] == 'Sin equipo':
+        p['team'] = team
+    p['issues'].append({
+        'key': i['key'], 'summary': summary, 'status': status,
+        'type': itype, 'proj': proj, 'est': est, 'log': log,
+        'rem': rem, 'prio': prio, 'board': 'DEV', 'days_in_status': days_in_status,
+        'last_comment': '', 'inversion': (f.get('customfield_10937') or {}).get('value', '')
+    })
 
 print(f"Dashboard generated: {len(html)} chars")
 print(f"Updated: {updated}")
