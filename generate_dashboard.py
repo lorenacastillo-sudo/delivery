@@ -303,9 +303,9 @@ function chipsHtml(counts,board){
 
 function render(){
   var list = curTeam==="Todos" ? ALL : ALL.filter(function(p){return p.team===curTeam;});
-  document.getElementById("pills").innerHTML = TEAMS.map(function(t){
+  document.getElementById("pills").innerHTML = TEAMS.map(function(t,i){
     var label = t==="Client Management/Finance & Accounting" ? "Client Mgmt" : t;
-    return "<div class='pill"+(t===curTeam?" on":"")+"' onclick='setTeam(\""+t.replace(/"/g,"&quot;")+"\")'>"+label+"</div>";
+    return "<div class='pill"+(t===curTeam?" on":"")+"' data-idx='"+i+"' onclick='setTeamByIdx(this.getAttribute(\"data-idx\"))'>"+label+"</div>";
   }).join("");
   if(!list.length){
     document.getElementById("grid").innerHTML="<div style='grid-column:1/-1;text-align:center;padding:2rem;color:#aaa;'>Sin personas.</div>";
@@ -315,6 +315,7 @@ function render(){
 }
 
 function setTeam(t){curTeam=t;document.getElementById("det").innerHTML="";render();}
+function setTeamByIdx(i){setTeam(TEAMS[parseInt(i)]);}
 
 function cardHtml(p,idx){
   var s=p.stats;
