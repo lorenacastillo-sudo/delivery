@@ -23,6 +23,45 @@ SER_STATUS_MAP = {
 
 SER_OPEN = {'En curso','Escalated','Pending','Waiting for customer','Waiting for support','Waiting for approval'}
 
+TEAM_MAP = {
+    # Shared Services
+    'Alexander Contreras': 'Shared Services',
+    'Deisy Muñoz': 'Shared Services',
+    'Gabriel Andrés Rondón Barragán': 'Shared Services',
+    # Infraestructura
+    'Omar Davila': 'Infraestructura',
+    'David Tabla': 'Infraestructura',
+    'Valentina Aguirre': 'Infraestructura',
+    # Traction
+    'Juan Pablo Velandia': 'Traction',
+    'Edison Rojas': 'Traction',
+    'Oscar Mendez': 'Traction',
+    'Maria Paulina Ramirez Vasquez': 'Traction',
+    'Joaquín Forero': 'Traction',
+    # QA
+    'Fabian Roa': 'QA',
+    'Lorena Pacavita': 'QA',
+    # Tech Product
+    'Vivian Rodriguez': 'Tech Product',
+    'Karen Garzón': 'Tech Product',
+    # Client Management/Finance & Accounting
+    'Arnold Blandon': 'Client Management/Finance & Accounting',
+    'Anderson Caceres': 'Client Management/Finance & Accounting',
+    'Miguel Jaramillo': 'Client Management/Finance & Accounting',
+    # Onboarding
+    'Luis Meza': 'Onboarding',
+    'Heiner Granados': 'Onboarding',
+    # Delivery
+    'Lorena Castillo': 'Delivery',
+    'Daniela Jaramillo': 'Delivery',
+    # Legacy/Integrations
+    'Andrés Bueno': 'Legacy/Integrations',
+    'Daniela Guzman': 'Legacy/Integrations',
+    'Jose Acevedo': 'Legacy/Integrations',
+    'Javier Gutierrez': 'Legacy/Integrations',
+}
+
+
 def jira_search(jql, fields, start=0, max_results=100):
     url = f"{JIRA_BASE}/rest/api/3/search/jql"
     params = {
@@ -68,7 +107,7 @@ people = defaultdict(lambda: {'team':'Sin equipo','issues':[]})
 for i in req_issues:
     f = i['fields']
     name = f['assignee']['displayName'] if f.get('assignee') else 'Sin asignar'
-    team = (f.get('customfield_10001') or {}).get('name','Sin equipo')
+    team = TEAM_MAP.get(name, (f.get('customfield_10001') or {}).get('name','Sin equipo'))
     status = f['status']['name']
     proj = f['project']['key']
     est = f.get('timeoriginalestimate') or 0
@@ -93,7 +132,7 @@ for i in ser_issues:
     status = SER_STATUS_MAP.get(raw_st, raw_st)
     if status not in SER_OPEN:
         continue  # skip closed SER tickets
-    team = (f.get('customfield_10001') or {}).get('name','Sin equipo')
+    team = TEAM_MAP.get(name, (f.get('customfield_10001') or {}).get('name','Sin equipo'))
     proj = f['project']['key']
     est = f.get('timeoriginalestimate') or 0
     log = f.get('timespent') or 0
