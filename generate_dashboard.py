@@ -86,13 +86,30 @@ def fetch_all(jql, fields):
         start += len(issues)
     return all_issues
 
-print("Fetching REQ issues...")
-req_issues = fetch_all(
-    '(sprint in openSprints() OR sprint = 2016) AND issuetype in ("Task","Bug","Subtask","Test Set")',
+print("Fetching REQ issues (openSprints)...")
+req_open = fetch_all(
+    'sprint in openSprints() AND issuetype in ("Task","Bug","Subtask","Test Set")',
     ["summary","assignee","status","issuetype","project","timeoriginalestimate",
      "timespent","timeestimate","priority","customfield_10001"]
 )
-print(f"REQ: {len(req_issues)} issues")
+print(f"REQ openSprints: {len(req_open)} issues")
+
+print("Fetching REQ issues (sprint 2016)...")
+req_2016 = fetch_all(
+    'sprint = 2016 AND issuetype in ("Task","Bug","Subtask","Test Set")',
+    ["summary","assignee","status","issuetype","project","timeoriginalestimate",
+     "timespent","timeestimate","priority","customfield_10001"]
+)
+print(f"REQ sprint 2016: {len(req_2016)} issues")
+
+# Deduplicate by key
+seen_keys = set()
+req_issues = []
+for i in req_open + req_2016:
+    if i['key'] not in seen_keys:
+        seen_keys.add(i['key'])
+        req_issues.append(i)
+print(f"REQ total (deduplicated): {len(req_issues)} issues")
 
 print("Fetching SER issues...")
 ser_issues = fetch_all(
