@@ -249,7 +249,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="grid" id="grid"></div>
 <div id="det"></div>
 <script>
-var ALL = """ + data_json + """;
+var ALL = """ + data_json.replace('</script>', '<\/script>').replace('`', '&#96;') + """;
 var TEAMS = ["Todos","Onboarding","Traction","Legacy/Integrations","QA","Tech Product","Shared Services","Infraestructura","Client Management/Finance & Accounting","Delivery","Sin equipo"];
 var curTeam = "Todos";
 var AC = ["#e6f1fb","#eaf3de","#faeeda","#eeedfe","#faece7","#fbeaf0"];
