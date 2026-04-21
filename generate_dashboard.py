@@ -19,8 +19,9 @@ SER_STATUS_MAP = {
     'Waiting for customer':'Waiting for customer',
     'Waiting for support':'Waiting for support',
     'Waiting for approval':'Waiting for approval',
-    'Resolved':'Resolved','[FINISHED]':'Resolved',
 }
+
+SER_OPEN = {'En curso','Escalated','Pending','Waiting for customer','Waiting for support','Waiting for approval'}
 
 def jira_search(jql, fields, start=0, max_results=100):
     url = f"{JIRA_BASE}/rest/api/3/search/jql"
@@ -56,7 +57,7 @@ print(f"REQ: {len(req_issues)} issues")
 
 print("Fetching SER issues...")
 ser_issues = fetch_all(
-    project = SER AND status in ("En curso", "Escalated", "Pending", "Waiting for customer", "Waiting for support", "Waiting for approval"),
+    'project = SER AND status in ("En curso", "Escalated", "Pending", "Waiting for customer", "Waiting for support", "Waiting for approval")',
     ["summary","assignee","status","issuetype","project","timeoriginalestimate",
      "timespent","timeestimate","priority","customfield_10001"]
 )
@@ -90,6 +91,8 @@ for i in ser_issues:
     name = f['assignee']['displayName'] if f.get('assignee') else 'Sin asignar'
     raw_st = f['status']['name']
     status = SER_STATUS_MAP.get(raw_st, raw_st)
+    if status not in SER_OPEN:
+        continue  # skip closed SER tickets
     team = (f.get('customfield_10001') or {}).get('name','Sin equipo')
     proj = f['project']['key']
     est = f.get('timeoriginalestimate') or 0
