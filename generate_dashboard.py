@@ -62,28 +62,29 @@ TEAM_MAP = {
 }
 
 
-def jira_search(jql, fields, start=0, max_results=100):
+def fetch_all(jql, fields):
+    all_issues = []
     url = f"{JIRA_BASE}/rest/api/3/search/jql"
     params = {
         "jql": jql,
         "fields": ",".join(fields),
-        "maxResults": max_results,
-        "startAt": start
+        "maxResults": 100,
     }
-    r = requests.get(url, headers=HEADERS, params=params)
-    r.raise_for_status()
-    return r.json()
-
-def fetch_all(jql, fields):
-    all_issues = []
-    start = 0
     while True:
-        data = jira_search(jql, fields, start=start)
+        r = requests.get(url, headers=HEADERS, params=params)
+        r.raise_for_status()
+        data = r.json()
         issues = data.get("issues", [])
         all_issues.extend(issues)
-        if start + len(issues) >= data.get("total", 0) or not issues:
+        next_token = data.get("nextPageToken")
+        if not next_token or not issues:
             break
-        start += len(issues)
+        params = {
+            "jql": jql,
+            "fields": ",".join(fields),
+            "maxResults": 100,
+            "nextPageToken": next_token,
+        }
     return all_issues
 
 print("Fetching REQ issues (openSprints)...")
