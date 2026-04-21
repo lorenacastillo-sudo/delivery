@@ -49,7 +49,7 @@ def fetch_all(jql, fields):
 
 print("Fetching REQ issues...")
 req_issues = fetch_all(
-    'sprint in openSprints() AND issuetype in ("Task","Bug","Subtask","Test Set")',
+    '(sprint in openSprints() OR sprint = 2016) AND issuetype in ("Task","Bug","Subtask","Test Set")',
     ["summary","assignee","status","issuetype","project","timeoriginalestimate",
      "timespent","timeestimate","priority","customfield_10001"]
 )
