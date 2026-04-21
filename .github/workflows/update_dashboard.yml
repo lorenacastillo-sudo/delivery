@@ -1,36 +1,28 @@
 name: Update Sprint Dashboard
-
 on:
   schedule:
-    # Runs every day Mon-Fri at 7am and 1pm Bogota time (UTC-5 = 12:00 and 18:00 UTC)
     - cron: '0 12 * * 1-5'
     - cron: '0 18 * * 1-5'
-  workflow_dispatch: # allows manual trigger from GitHub UI
-
+  workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
       - name: Install dependencies
         run: pip install requests
-
       - name: Generate dashboard
         env:
           JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
           JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
           JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
         run: python generate_dashboard.py
-
-     - name: Commit and push updated dashboard
+      - name: Commit and push updated dashboard
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
