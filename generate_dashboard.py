@@ -56,7 +56,7 @@ print(f"REQ: {len(req_issues)} issues")
 
 print("Fetching SER issues...")
 ser_issues = fetch_all(
-    'project = SER AND sprint in openSprints()',
+    project = SER AND status in ("En curso", "Escalated", "Pending", "Waiting for customer", "Waiting for support", "Waiting for approval"),
     ["summary","assignee","status","issuetype","project","timeoriginalestimate",
      "timespent","timeestimate","priority","customfield_10001"]
 )
