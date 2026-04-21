@@ -33,6 +33,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add dashboard_sprint_lineru.html
-          git diff --staged --quiet || git commit -m "🔄 Auto-update dashboard $(date +'%d/%m/%Y %H:%M')"
+          git add -f dashboard_sprint_lineru.html
+          git commit --allow-empty -m "🔄 Auto-update dashboard $(date +'%d/%m/%Y %H:%M')"
           git push --force origin main
