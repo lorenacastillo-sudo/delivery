@@ -133,7 +133,7 @@ function cH(p,idx){
   var req=ab(p.issues,"REQ"),ser=ab(p.issues,"SER"),dev=ab(p.issues,"DEV");
   var hR=Object.keys(req).length>0,hS=Object.keys(ser).length>0,hD=Object.keys(dev).length>0;
   var lh=s.log_h,rh=Math.max(0,s.est_h-lh);
-  var lp=Math.min(lh/160*100,100).toFixed(1),rp=Math.min(rh/160*100,100).toFixed(1);
+  var lp=Math.min(lh/80*100,100).toFixed(1),rp=Math.min(rh/80*100,100).toFixed(1);
   var over=lh>s.est_h&&s.est_h>0,logC=over?"#e24b4a":"#1d9e75";
   var h="<div class='pc' id='pc"+idx+"' onclick='SC("+idx+")'>";
   h+="<div style='display:flex;align-items:center;gap:8px;margin-bottom:8px;'>";
@@ -144,7 +144,7 @@ function cH(p,idx){
   h+="<div class='bw'><div style='width:"+lp+"%;background:"+logC+";height:100%;'></div>";
   h+="<div style='width:"+rp+"%;background:#f0a500;height:100%;opacity:.7;'></div></div>";
   h+="<div class='bl2'><span style='color:"+logC+";'>&#9632; "+lh.toFixed(1)+"h log</span>";
-  h+="<span style='color:#f0a500;'>&#9632; "+rh.toFixed(1)+"h rest</span><span>/ 160h</span></div>";
+  h+="<span style='color:#f0a500;'>&#9632; "+rh.toFixed(1)+"h rest</span><span>/ 80h</span></div>";
   if(s.capex_pct+s.opex_pct>0){
     h+="<div class='ib'><div style='flex:"+s.capex_pct+";background:#378add;'></div>";
     h+="<div style='flex:"+s.opex_pct+";background:#f0a500;'></div></div>";
@@ -173,7 +173,7 @@ var SDOT={"[IN PROGRESS]":"dp","[BLOCKED]":"db","[RETURNED]":"dret","[TO DO]":"d
 function rD(p){
   var s=p.stats;
   var lh=s.log_h,rh=Math.max(0,s.est_h-lh),over=lh>s.est_h&&s.est_h>0,logC=over?"#e24b4a":"#1d9e75";
-  var lp=Math.min(lh/160*100,100).toFixed(1),rp=Math.min(rh/160*100,100).toFixed(1);
+  var lp=Math.min(lh/80*100,100).toFixed(1),rp=Math.min(rh/80*100,100).toFixed(1);
   var grp={};SOR.forEach(function(st){grp[st]=[];});
   p.issues.forEach(function(i){if(grp[i.status])grp[i.status].push(i);else grp[i.status]=[i];});
   var iss="";
@@ -201,7 +201,7 @@ function rD(p){
   h+="<div class='dh'><div class='dav' style='"+avc(p.name)+"'>"+ini(p.name)+"</div>";
   h+="<div><div class='dn'>"+p.name+"</div><div class='dm'>"+p.team+" &middot; "+s.total+" issues</div></div></div>";
   h+="<div class='mrow'>";
-  h+="<div class='m'><div class='ml'>Estimado</div><div class='mv'>"+s.est_h.toFixed(1)+"h</div><div class='ms'>"+Math.min(s.est_h/160*100,999).toFixed(0)+"% de 160h</div></div>";
+  h+="<div class='m'><div class='ml'>Estimado</div><div class='mv'>"+s.est_h.toFixed(1)+"h</div><div class='ms'>"+Math.min(s.est_h/80*100,999).toFixed(0)+"% de 80h</div></div>";
   h+="<div class='m'><div class='ml'>Logueado</div><div class='mv' style='color:"+logC+"'>"+lh.toFixed(1)+"h</div><div class='ms'>"+(over?"excedido":"registrado")+"</div></div>";
   h+="<div class='m'><div class='ml'>Restante</div><div class='mv' style='color:#f0a500'>"+rh.toFixed(1)+"h</div><div class='ms'>por ejecutar</div></div>";
   h+="<div class='m'><div class='ml'>Bloqueados</div><div class='mv' style='color:"+(s.blocked>0?"#e24b4a":"#1a1a1a")+"'>"+s.blocked+"</div><div class='ms'>requieren acción</div></div>";
@@ -223,7 +223,7 @@ function rD(p){
   h+="<div style='display:flex;justify-content:space-between;font-size:10px;color:#888;margin-top:4px;'>";
   h+="<span style='color:"+logC+";font-weight:600;'>&#9632; Logueado: "+lh.toFixed(1)+"h</span>";
   h+="<span style='color:#f0a500;font-weight:600;'>&#9632; Restante: "+rh.toFixed(1)+"h</span>";
-  h+="<span>Libre: "+Math.max(0,160-lh-rh).toFixed(1)+"h / 160h</span></div></div>";
+  h+="<span>Libre: "+Math.max(0,80-lh-rh).toFixed(1)+"h / 80h</span></div></div>";
   h+=iss+"</div>";
   document.getElementById("det").innerHTML=h;
 }
