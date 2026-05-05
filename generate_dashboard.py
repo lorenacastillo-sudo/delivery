@@ -290,18 +290,9 @@ if __name__ == "__main__":
         except: return 0
 
     print("Fetching REQ (openSprints)...")
-    req_open = fetch_all('sprint in openSprints() AND issuetype in ("Task","Bug","Subtask","Test Set")')
-    print(f"REQ openSprints: {len(req_open)}")
-    print("Fetching REQ (sprint 2016)...")
-    req_2016 = fetch_all('sprint = 2016 AND issuetype in ("Task","Bug","Subtask","Test Set")')
-    print(f"REQ sprint 2016: {len(req_2016)}")
-    seen = set()
-    req_issues = []
-    for i in req_open + req_2016:
-        if i['key'] not in seen:
-            seen.add(i['key'])
-            req_issues.append(i)
+    req_issues = fetch_all('sprint in openSprints() AND issuetype in ("Task","Bug","Subtask","Test Set")')
     print(f"REQ total: {len(req_issues)}")
+
     print("Fetching SER...")
     ser_issues = fetch_all('project = SER AND status in ("En curso","Escalated","Pending","Waiting for customer","Waiting for support","Waiting for approval")')
     print(f"SER: {len(ser_issues)}")
